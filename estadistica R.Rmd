@@ -1,0 +1,411 @@
+---
+title: "curso de estadistica en R"
+author: "Kevin Urbano Antela"
+date: "10/10/2022"
+output:
+  word_document: default
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+##Estadistica Descriptiva Básica de Correlación
+
+Primero se va a importar las librerias Mass y las libreria ggplot2 para poder trabajar con los datos
+Se van a importar los datos de Cars93 para trabajr con el peso y los caballos de potencia
+
+```{}
+library(MASS)
+library(ggplot2)
+data("Cars93")
+```
+
+Se va a mostrar una gráfica de dispersión para correlacionar el peso con los caballos de potencia 
+
+```{}
+ggplot(data = Cars93, aes(x = Weight, y = Horsepower)) + 
+  geom_point(colour = "red4") +
+  ggtitle("Diagrama de dispersión") +
+  theme_bw() +
+  theme(plot.title = element_text(hjust = 0.5))
+```
+
+El siguiente codigo permite obtener un histograma de 10 barras respecto la frecuencia de los resultados para cada variable
+
+```{}
+par(mfrow = c(1, 2))
+hist(Cars93$Weight, breaks = 10, main = "", xlab = "Weight", border = "darkred")
+hist(Cars93$Horsepower, breaks = 10, main = "", xlab = "Horsepower",
+     border = "blue")
+```
+
+Vamos a proceder con el estudio de normalidad
+
+En estadística, un gráfico de Q-Q (quantile-quantile) es un gráfico de probabilidad, que es un método gráfico para comparar dos distribuciones de probabilidad al trazar sus cuantiles uno contra el otro.En este caso, lo ideal es que los puntos se acerquen a una recta diagonal.
+
+el siguiente codigo permite obtener la representacion del grafico Q-Q y la representación de la recta diagonal
+
+```{}
+qqnorm(Cars93$Weight, main = "Weight", col = "darkred")
+qqline(Cars93$Weight)
+qqnorm(Cars93$Horsepower, main = "Horsepower", col = "blue")
+qqline(Cars93$Horsepower)
+```
+
+En este caso, la hipótesis nula del test Shapiro-Wilk es que la población representa una distribución normal. Por lo tanto, un valor de p< 0.05 indica que se debe rechazar la hipótesis nula. En otras palabras, los datos no poseen distribución normal.
+
+```{}
+# Test de hipótesis para el análisis de normalidad
+shapiro.test(Cars93$Weight)
+shapiro.test(Cars93$Horsepower)
+```
+
+Siendo estrictos, este hecho excluye la posibilidad de utilizar el coeficiente de Pearson, dejando como alternativas el de Spearman o Kendall. Sin embargo, dado que la distribución no se aleja mucho de la normalidad y de que el coeficiente de Pearson tiene cierta robustez, a fines prácticos sí que se podría utilizar siempre y cuando se tenga en cuenta este hecho en los resultados. Otra posibilidad es tratar de transformar las variables para mejorar su distribución.
+
+Si se comprueba otra vez empleando el log10 de los datos para Horsepower se puede obtener la normalidad
+
+```{}
+par(mfrow = c(1, 2))
+hist(log10(Cars93$Horsepower), breaks = 10, main = "", xlab = "Log10(Horsepower)",
+     border = "blue")
+qqnorm(log10(Cars93$Horsepower), main = "", col = "blue")
+qqline(log10(Cars93$Horsepower))
+
+par(mfrow = c(1, 1))
+shapiro.test(log10(Cars93$Horsepower))
+
+```
+
+Estudio de la homocedasticidad
+
+```{}
+#comprobar homocedasticidad (no este caso)
+ggplot(data = Cars93, aes(x = Weight, y = Horsepower)) + 
+  geom_point(colour = "red4") +
+  geom_segment(aes(x = 1690, y = 70, xend = 3100, yend = 300),linetype="dashed") +
+  geom_segment(aes(x = 1690, y = 45, xend = 4100, yend = 100),linetype="dashed") +
+  ggtitle("Diagrama de dispersión") +
+  theme_bw() +
+  theme(plot.title = element_text(hjust = 0.5))
+```
+
+Calculo de correlacion
+
+Debido a la falta de homocedasticidad, los resultados generados por Pearson no son precisos, desde el punto de vista teórico Spearman o Kendall son más adecuados. Sin embargo, en la bibliografía emplean Pearson, así que se van a calcular tanto Pearson como Spearman.
+
+condiciones pearson:
+  lineal
+  cuantitativas
+  normalidad
+  homocedasticidad
+  
+condiciones pearson:
+equivalente al coeficiente de Pearson pero con una previa transformación de los datos a rangos. Se emplea como alternativa cuando los valores son ordinales, o bien, cuando los valores son continuos pero no satisfacen la condición de normalidad requerida por el coeficiente de Pearson y se pueden ordenar transformándolos en rangos. Al trabajar con rangos, es menos sensible que Pearson a valores extremos. Existe una diferencia adicional con respecto a Pearson. El coeficiente de Spearman requiere que la relación entre las variables sea monótona, es decir, que cuando una variable crece la otra también lo hace o cuando una crece la otra decrece (que la tendencia sea constante). Este concepto no es exactamente el mismo que linealidad.
+
+```{}
+cor(x = Cars93$Weight, y = log10(Cars93$Horsepower), method = "pearson")
+cor(x = Cars93$Weight, y = log10(Cars93$Horsepower), method = "spearman")
+
+```
+
+Ambos test muestran una correlación alta (>0.8). Sin embargo para poder considerar que existe realmente correlación entre las dos variables es necesario calcular su significancia, de lo contrario podría deberse al azar.
+
+Significancia de la correlación
+
+
+```{}
+cor.test(x = Cars93$Weight,
+         y = log10(Cars93$Horsepower), 
+         alternative = "two.sided",
+         conf.level  = 0.95,
+         method      = "pearson")
+
+cor.test(x = Cars93$Weight,
+         y = log10(Cars93$Horsepower),
+         alternative = "two.sided",
+         conf.level  = 0.95,
+         method      = "spearman")
+```
+
+Ambos coeficientes de correlación son significativos (p_value ≈ 0).
+
+Por ultimo el R2
+
+```{}
+R2_pearson <- cor(x = Cars93$Weight,
+                  y = log10(Cars93$Horsepower),
+                  method = "pearson")
+R2_pearson <- R2_pearson^2
+R2_pearson
+```
+
+Con esto se puede concluir que si hay una r elevada y un p-value cercano a 0 con una R2 alta, hay correlacion significativa
+
+
+##CORRELACION DE JACKKNIFE
+
+se puede comprobar el efecto en la correlacion total de cada par de variables
+
+Si dos variables tienen un pico o un valle común en una única observación, por ejemplo por un error de lectura, la correlación va a estar dominada por este registro a pesar de que entre las dos variables no haya correlación real alguna.
+
+Una forma de evitarlo es recurrir a la Jackknife correlation, que consiste en calcular todos los posibles coeficientes de correlación entre dos variables si se excluye cada vez una de las observaciones. El promedio de todas las Jackknife correlations calculadas atenuará en cierta medida el efecto del outlier.
+
+
+```{}
+# Datos simulados de dos variables A y B
+a <- c(12,9,6,7,2,5,4,0,1,8)
+b <- c(3,5,1,9,5,3,7,2,10,5)
+
+# Se introduce un outlier
+a[5] <- 20
+b[5] <- 16
+datos <- data.frame(a,b)
+```
+
+se observa la representación gráfica
+
+
+```{}
+plot(datos$a, type = "o", lty = 1, pch = 19, col = "firebrick",
+     ylab = "concentración", main = "Con outlier")
+lines(datos$b, type = "o", pch = 19, lty = 1)
+legend("topright", legend = c("A", "B"),
+       col = c("firebrick", "black"), lty = c(1,1), cex = 0.8)
+```
+
+se obtiene la correlacion
+
+
+```{}
+cor(datos$a, datos$b, method = "pearson")
+```
+
+Se elimina el outlier
+
+
+```{}
+a <- a[-5]
+b <- b[-5]
+datos_sin_outlier <- data.frame(a,b)
+plot(datos_sin_outlier$a, type = "o", pch = 19, col = "firebrick", ylim = c(0,20),
+     ylab = "concentración", main = "Sin outlier")
+lines(datos_sin_outlier$b, type = "o", pch = 19, lty = 1)
+legend("topright", legend = c("A", "B"), col = c("firebrick", "black"),
+       lty = c(1,1), cex = 0.8)
+```
+
+
+se obtiene la correlacion
+
+
+```{}
+cor(datos_sin_outlier$a, datos_sin_outlier$b, method = "pearson")
+```
+
+
+funcion para aplicar jackknife a la correlacion de pearson
+
+```{}
+correlacion_jackknife <- function(matriz, method = "pearson"){
+  n <- nrow(matriz) #   número de observaciones
+  valores_jackknife <- rep(NA, n)
+  
+  for (i in 1:n) { 
+    # Loop para excluir cada observación y calcular la correlación
+    valores_jackknife[i] <- cor(matriz[-i, 1], matriz[-i, 2], method = method)
+  }
+  
+  promedio_jackknife <- mean(valores_jackknife)
+  standar_error <- sqrt(((n - 1)/n)*sum((valores_jackknife-promedio_jackknife)^2))
+  bias <- (n - 1) * (promedio_jackknife - cor(matriz[, 1], matriz[, 2],
+                                              method = method))
+  return(list(valores_jackknife = valores_jackknife,
+              promedio = promedio_jackknife,
+              se = standar_error,
+              bias = bias))
+}
+
+correlacion <- correlacion_jackknife(datos)
+correlacion$promedio
+```
+
+
+```{}
+correlacion$valores_jackknife 
+correlacion$se 
+correlacion$bias
+
+
+```
+
+
+se puede representar como varia la correlaación con cada medida
+
+
+```{}
+plot((correlacion$valores_jackknife - cor(datos$a, datos$b, method = "pearson")),
+     type = "o", pch = 19, ylab = "variación en la correlación")
+```
+
+
+##MATRICES DE CORRELACION
+
+Cuando se dispone de múltiples variables y se quiere estudiar la relación entre todas ellas se recurre al cálculo de matrices con el coeficiente de correlación de cada par de variables
+
+vamos a trabajar con la base de datos iris
+```{}
+data(iris)
+#Se seleccionan únicamente las variables numéricas
+datos <- iris[,c(1,2,3,4)]
+head(datos)
+```
+
+para mostrar unicamente las graficas de representacion de cada par dde variables
+
+
+
+```{}
+pairs(x = datos, lower.panel = NULL)
+```
+
+
+para ver las graficas de frecuencias y su distribución
+
+
+```{}
+install.packages("psych")
+library(psych)
+multi.hist(x = datos, dcol = c("blue", "red"), dlty = c("dotted", "solid"), 
+           main = "")
+```
+
+representacion de una matriz de correlaciones
+
+
+
+```{}
+library(corrplot)
+corrplot(corr = cor(x = datos, method = "pearson"), method = "number",
+         tl.cex = 0.7,number.cex = 0.8, cl.pos = "n")
+```
+
+
+representacion de los histogramas de frecuencias, las correlaciones por cada par de variabes y los valores de correlacion
+
+
+```{}
+library(psych)
+pairs.panels(x = datos, ellipses = FALSE, lm = TRUE, method = "pearson")
+
+```
+
+la misma representacion pero ademas tiene en cuenta las variables categoricas y las represena mediante boxplot
+
+
+
+```{}
+install.packages("GGally")
+library(GGally)
+ggpairs(iris, lower = list(continuous = "smooth"), 
+        diag = list(continuous = "bar"), axisLabels = "none")
+```
+
+
+##ESTUDIO DE LA CORRELACIÓN PARCIAL
+
+esto se utiliza para comprobar si hay una tercera variable que influye en la correalación de las otras dos
+
+
+```{}
+pcor.test(x = Cars93$Weight, y = log(Cars93$Price), z = Cars93$Horsepower,
+          method = "pearson")
+```
+
+
+##Representación de la regresión lineal con el intervalo de confianza
+
+
+```{}
+library(ggplot2)
+ggplot(data = mtcars, aes(x = hp, y = mpg)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = TRUE, color = "firebrick") +
+  theme_bw() + labs(x = "", y = "")
+```
+
+por pasos y adaptable
+
+primero la representacion de los datos
+
+
+
+```{}
+library(ggplot2)
+ggplot(data = datos, mapping = aes(x = numero_bateos, y = runs)) +
+  geom_point(color = "firebrick", size = 2) +
+  labs(title  =  'Diagrama de dispersión', x  =  'número  de bateos') +
+  theme_bw() +
+  theme(plot.title = element_text(hjust = 0.5))
+```
+
+comprobar con un cor test si merece la pena el modelo lineal
+
+
+```{}
+cor.test(x = datos$numero_bateos, y = datos$runs, method = "pearson")
+```
+
+calculo del modelo lineal
+
+```{}
+modelo_lineal <- lm(runs ~ numero_bateos, datos)
+summary(modelo_lineal)
+```
+
+intervalos de confianza de los parámetros del modelo
+
+
+```{}
+confint(modelo_lineal)
+```
+
+
+representación gráfica del modelo
+
+
+```{}
+ggplot(data = datos, mapping = aes(x = numero_bateos, y = runs)) +
+  geom_point(color = "firebrick", size = 2) +
+  labs(title  =  'Runs ~ número de bateos', x  =  'número  de bateos') +
+  geom_smooth(method = "lm", se = FALSE, color = "black") +
+  theme_bw() +
+  theme(plot.title = element_text(hjust = 0.5))
+
+# Se genera una secuencia de valores x_i que abarquen todo el rango de las
+# observaciones de la variable X
+puntos <- seq(from = min(datos$numero_bateos),
+              to = max(datos$numero_bateos),
+              length.out = 100)
+# Se predice el valor de la variable Y junto con su intervalo de confianza para
+# cada uno de los puntos generados. En la función predict() hay que nombrar a 
+# los nuevos puntos con el mismo nombre que la variable X del modelo.
+# Devuelve una matriz.
+limites_intervalo <- predict(object = modelo_lineal,
+                             newdata = data.frame(numero_bateos = puntos),
+                             interval = "confidence", level = 0.95)
+head(limites_intervalo, 3) 
+
+# Finalmente se añaden al gráfico las líneas formadas por los límites
+# superior e inferior.
+plot(datos$numero_bateos, datos$runs, col = "firebrick", pch = 19, ylab = "runs",
+     xlab = "número de bateos", main = 'Runs ~ número de bateos')
+abline(modelo_lineal, col = 1)
+lines(x = puntos, y = limites_intervalo[,2],type = "l", col = 2, lty = 3)
+lines(x = puntos, y = limites_intervalo[,3],type = "l", col = 3, lty = 3)
+```
+
+
+

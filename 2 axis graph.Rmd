@@ -1,0 +1,46 @@
+library(ggplot2)
+library(patchwork)
+library(ggthemes)
+
+setwd("C:/Users/Mit3vK3y/Desktop/TESIS/italia") 
+
+data<-read.table("grafico 1 perox estable.csv", header=FALSE, sep=";",na.strings="NA",
+                 fileEncoding = "UTF-8",
+                 quote = "\"",
+                 colClasses=c(rep("numeric",4)
+                 )
+)
+
+p1<- ggplot(data, aes(V1,V2))+
+  geom_point()
+
+p2<-ggplot(data, aes(V3,V4))+
+  geom_point()
+
+ggplot(data, aes(x=V3))+
+  geom_line(aes(y=V4),size=1.5, color="seagreen3")+
+  geom_point(aes(y=V4),size=4, color="seagreen3",shape=17)+
+  geom_line(aes(y=V2),size=1.5, color="steelblue3")+
+  geom_point(aes(y=V2),size=4, color="steelblue3")+
+  scale_y_continuous(name=expression("C/C"[0]),
+                     sec.axis = sec_axis(~.*1,name=expression("H"[2]*"O"[2]*" mM")))+
+  theme_economist()+
+  theme(
+    axis.title.y = element_text(color="seagreen3", size=20),
+    axis.title.y.right = element_text(color="steelblue3", size = 20)
+  )+
+  theme(
+    axis.text.y = element_text(color="black",size=15),
+    axis.text.y.right = element_text(color="black",size=15),
+    axis.text.x = element_text(color="black",size=15),
+  )+
+  xlab("Time(minutes)")+
+  theme(axis.title.x = element_text(color="black",size = 20),
+        plot.background = element_rect(fill="white"),
+        panel.border = element_rect(colour="black",size=0.5)
+        #panel.grid.major = element_line(colour = "black",size = 0.5),
+        #panel.grid.minor = element_line(colour = "black",size = 0.5),
+       )
+  ##ggtitle("Prueba5")+
+  ##labs(caption="prueba6")
+

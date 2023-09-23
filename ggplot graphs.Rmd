@@ -1,0 +1,238 @@
+
+#shape = variable,  #give a shape according the variable
+
+# STEP 1
+# the first thing is install the package
+
+
+install.packages("ggplot2")
+library(ggplot2)
+
+#now you can star to create the graphs
+
+
+
+
+#STEP 2
+#You have to open the folder where is your file, the route
+
+setwd("C:/Users/Mit3vK3y/Desktop/MONJAS/analisis de datos") 
+
+#now you have to save your csv as a data table in R 
+#only have to put the name of the csv file and in colclasses put in order the type of data, how many
+#columns are of text type data or nueric data in order (if you have the first and third colum data of text
+#and the second column of numeric data you have tu put rep character 1 rep numeric 1 and rep character 1)
+#your data is in the table "data" that is the name that have you used for r data table
+
+data<-read.table("datos dientes limpios promedio.csv", header=TRUE, sep=";",na.strings="NA",
+                   fileEncoding = "UTF-8",
+                   quote = "\"",
+                   colClasses=c(rep("character",3),
+                                rep("numeric",12)
+                   )
+)
+
+
+#STEP 3
+#now you can work with your data to create graphs
+
+
+# BAR PLOT
+
+# the most simple bar plot is this, the first argument is the name of the table
+# aes specify the parameter that you are going to study 
+# the you have to especify the type the graph
+
+
+ggplot(genero, aes(x = SEXO)) +
+  geom_bar(width = 0.5, colour="blue"+fill="red")+
+  xlab ("name of x axis")+
+  ylab("name of y lab")+
+  ggtitle("title of graph")
+
+
+#you can use the percentage in spite of the use of the raw number
+#this comand can be used to get the percentage
+# you are going to create a new table with the parameter that you want in the first column
+# and the second column will be the percentage
+
+
+datapercentage <- as.data.frame(prop.table(table(genero$SEXO))*100)
+colnames(tab.sex1) <- c("Sexo", "Porcentaje")
+
+
+#now you can use:
+
+ggplot(datapercentage, aes(x = Sexo, y = porcentaje))  + geom_bar(stat="identity")
+
+
+#if you want to create a multiple bar graph you can do
+# select de data, the column that you want to study and FILL by other parameter
+
+
+ggplot(genero, aes(P36, fill=SEXO)) + geom_bar(position="dodge")
+
+
+#this example take the genero data table, take the column P36, and is going to make 
+#a graph with the answers using the sex as de multiple bar, each data will have 2 bars
+#one of the for men and the other for women
+
+# if you don want to show one parameter you have to write:
+
+ggplot(genero[genero$P36!="NS/NR", ])
+       
+#this line say that in the table "genero" you are going to take all data from the column
+#P36 of the "genero" data that is different of "NS/NR"
+
+#if you want to get the data using 2 parameters you can do:
+
+parameters <- as.data.frame(prop.table(table(genero$P51D, genero$DOMINIO), 2)*100)
+colnames(parameters) <- c("answers", "Dominio", "Pct")
+
+#this going to get the percentage of answers for the column P51D, but using the city (Dominio)
+#then for each city the sum of all answer will be 100
+# now you can make the graph
+
+graph<- ggplot(tab.5, aes(x=Rptas, y=Pct)) + geom_bar(stat="identity") 
+
+
+#but this provide only a graph with the sum of the responses, the you have to add:
+
+graph + facet_grid(Dominio ~.) #each graph one under the other
+#or
+graph + facet_grid(.~Dominio ) #each graph one next to the other
+#or
+graph + facet_wrap(~ Dominio) #each grap one next other and at the end of the line the next graph under the first
+#or
+graph + coord_flip() + facet_wrap(~ Dominio) #this turn the data to see better the parameters represented
+
+#this line separate the graph into 1 graph per dominio 
+
+
+
+#when all the possibilities are shown the next code is for create a beautiful bar graph
+
+
+ggplot(nameoftable) +
+  geom_bar(aes(x=variable), 
+           #fill = "color",  #all have the same color
+           #fill = variable, #differents parts of the column are filled according the amount by each variable
+           #position = position_dodge(preserve = 'single'),   #for avoid stack bars
+           #color = "color",  #the lines that runded the rectangles
+          
+           )+
+  ylim(c(0, 50))+
+  xlim(c(0,50))+
+  xlab ("name of x axis")+
+  ylab("name of y lab")+
+  ggtitle("title of graph")+
+  theme(panel.grid= element_line(color = "colour",   #customice the grid chart
+                                 size =0.75,
+                                 linetype = 2
+                                 )
+        #panel.grid.major   #for major lines of the grid
+        #panel.grid.major.x #for major lines of x axis of the grid
+        #panel.grid.major.y
+        #panel.grid.minor   #for minor
+        #panel.grid.minor.x
+        #panel.grid.minor.y
+        #panel.grid = element_blank()    #remove grids
+        #panel.grid.major = element_blank()
+        #panel.grid.minor = element_blank()
+        )+
+  scale_y_continuous(breaks = seq(10, 35, by = 1),
+                     minor_breaks = seq(50, 350, 10))+  #this is for scale and breaks
+  scale_x_continuous(breaks = seq(50, 350, by = 25)
+                     #n.breaks = 20
+                     )# you can use number of breaks)
+
+
+# BOX PLOT
+
++ geom_boxplot(
+  notch = TRUE,
+  fill = "white", 
+  colour = "#3366FF",
+  outlier.colour = "red", 
+  outlier.shape = 1,
+  aes(colour = parameter)
+  
+)
+
+#if you want show all the points
+
+# Remove outliers when overlaying boxplot with original data points
+geom_boxplot(outlier.shape = NA) + geom_jitter(width = 0.2)
+
+
+
+
+
+
+#CORRELATION PLOT
+
+# Compute a correlation matrix
+corr <- round(cor(mtcars), 1)
+head(corr[, 1:6])
+
+# Compute a matrix of correlation p-values
+p.mat <- cor_pmat(mtcars)
+head(p.mat[, 1:4])
+
+
+#create a corrlation plot
+ggcorrplot(corr,
+           method = "circle",
+           hc.order = TRUE, #hierarchical clustering
+           type = "lower", #the lower triangle; "upper" upper triangle
+           outline.col = "white",
+           colors = c("#6D9EC1", "white", "#E46726"), #colors of the correlation
+           lab = TRUE, #show numbers
+           p.mat = p.mat, # Argument p.mat Barring the no significant coefficient
+           insig = "blank" #gives blanks to non significant coefficients
+           )
+
+
+
+ #PIE CHART
+
+
+  +coord_polar("y", start=0)   #add to the geom_bar
+
+
+#HISTOGRAM PLOT
+
+geom_histogram(color="black", fill="white")
+
+# Add mean line
+p+ geom_vline(aes(xintercept=mean(weight)),
+              color="blue", linetype="dashed", size=1)
+
+# Histogram with density plot
+ggplot(df, aes(x=weight)) + 
+  geom_histogram(aes(y=..density..), colour="black", fill="white")+
+  geom_density(alpha=.2, fill="#FF6666") 
+
+# Change histogram plot line colors by groups
+ggplot(df, aes(x=weight, color=sex)) +
+  geom_histogram(fill="white")
+
+
+# Overlaid histograms
+ggplot(df, aes(x=weight, color=sex)) +
+  geom_histogram(fill="white", alpha=0.5, position="identity")
+
+# Use semi-transparent fill
+p<-ggplot(df, aes(x=weight, fill=sex, color=sex)) +
+  geom_histogram(position="identity", alpha=0.5)
+
+# Use custom color palettes
+p+scale_color_manual(values=c("#999999", "#E69F00", "#56B4E9"))+
+  scale_fill_manual(values=c("#999999", "#E69F00", "#56B4E9"))
+
+#legend position
+p + theme(legend.position="top")
+p + theme(legend.position="bottom")
+# Remove legend
+p + theme(legend.position="none")
+
